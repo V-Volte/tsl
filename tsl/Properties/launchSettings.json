@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "tsl": {
+      "commandName": "Project",
+      "commandLineArgs": "lex.tslf"
+    }
+  }
+}
