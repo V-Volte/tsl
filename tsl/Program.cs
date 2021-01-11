@@ -1,26 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using static tsl.StdImp;
+using static tsl.Header;
 
 namespace tsl
 {
     class Program
-    {
-    
+    {  
 
         static int Main(string[] args)
         {
-            int ret = 0;
-            Dictionary<string, long> IntVar = new Dictionary<string, long>();
-            Dictionary<string, string> StringVar = new Dictionary<string, string>();
-            Dictionary<string, char> CharVar = new Dictionary<string, char>();
-            Dictionary<string, bool> BoolVar = new Dictionary<string, bool>();
-            Dictionary<string, double> FloatVar = new Dictionary<string, double>();
-            Dictionary<string, string> TypeMap = new Dictionary<string, string>();
-            List<string> names = new List<string>();
-            string[] keywords = {"int string bool float char vput vputl vget put putl puts ret fputs fwrites"};
-            //foreach (string keyword in keywords) Put(keyword + '\n');
-            names.Add("StringVariableOpenerZ36A");
+            names.Add("StringVariableOpenerZ36A@$#>DefaultString?_");
             if (args.Length < 1 || args.Length > 2)
             {
                return Err(".tslf input file required.", 5);
@@ -77,7 +67,7 @@ namespace tsl
             long lcount = 1;
             foreach (string line in infile)
             {
-                if (line.Length != 0 && line[line.Length - 1] == ' ') SpaceTerminated = true;
+                if (line.Length != 0 && line[^1] == ' ') SpaceTerminated = true;
                 line.Trim();
                 
                 string[] words = line.Split(' ');
@@ -575,7 +565,7 @@ namespace tsl
                             foreach (string outline in outstrd)
                             {
                                 Put(outline);
-                                if (outline[outline.Length - 1] == '\n') Put("\n");
+                                if (outline[^1] == '\n') Put("\n");
                                 else Put(" ");
                             }
                             break;
