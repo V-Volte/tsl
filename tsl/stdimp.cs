@@ -37,5 +37,7 @@ namespace tsl
             }
             return -1;
         }
+
+        public static string VersionString = "0.0.2";
     }
 }

@@ -12,18 +12,49 @@ namespace tsl
         {
             int ret = 0;
             Dictionary<string, long> IntVar = new Dictionary<string, long>();
-            Dictionary<string, string> StringVarr = new Dictionary<string, string>();
+            Dictionary<string, string> StringVar = new Dictionary<string, string>();
             Dictionary<string, char> CharVar = new Dictionary<string, char>();
             Dictionary<string, bool> BoolVar = new Dictionary<string, bool>();
             Dictionary<string, double> FloatVar = new Dictionary<string, double>();
             Dictionary<string, string> TypeMap = new Dictionary<string, string>();
             List<string> names = new List<string>();
-            string[] keywords = {"int string bool float char vput vputl vget put putl puts ret"};
+            string[] keywords = {"int string bool float char vput vputl vget put putl puts ret fputs fwrites"};
             //foreach (string keyword in keywords) Put(keyword + '\n');
             names.Add("StringVariableOpenerZ36A");
-            if (args.Length != 1)
+            if (args.Length < 1 || args.Length > 2)
             {
                return Err(".tslf input file required.", 5);
+            }
+            if (args.Length == 2)
+            {
+                if (args[1][0] != '-') {
+                    return Err("Usage: tslc [filename] [flag]\n", 1);
+                }
+
+                string flagstr = "";
+                for(int i = 1; i < args[1].Length; i++) flagstr+= args[1][i];
+
+                //Put(flagstr.ToLower());
+                switch (flagstr.ToLower())
+                {
+                    
+                    case "v":
+                    case "version":
+                    case "ver":
+                        try
+                        {
+                            string dateString = System.DateTime.Now.ToString("yyyy");
+                            Put("TSLC TSL Compiler Version " + VersionString + "\nCopyright Sekhara Pramod " + dateString + ".\n\n\n");
+                        }
+                        catch (Exception FileMissingE)
+                        {
+                            return Err("Couldn't find config file.", 2);
+                        }
+                        break;
+                    default:
+                        Err("Invalid flag.", 3);
+                        break;
+                }
             }
             string[] infile;
             string fname;
@@ -45,7 +76,7 @@ namespace tsl
             foreach (string line in infile)
             {
                 line.Trim();
-                long lcount = 0;
+                long lcount = 1;
                 string[] words = line.Split(' ');
                 lcount++;
                 
@@ -58,10 +89,15 @@ namespace tsl
                 //catch (Exception E) { return Err("Invalid declaration. ", 50); }
                 switch (words[0]) {
                     case "int":
+                        if (words.Length < 2) return Err("Expected variable identifier.", 30, lcount, fname);
                         if (names.Contains(words[1]))
                         {
                             TypeMap.TryGetValue(words[1], out string vartype);
                             return Err("Redefinition of variable " + words[1] + " of type " + vartype, 51, lcount, fname);
+                        }
+                        if (CheckArr(keywords, words[1]) != -1)
+                        {
+                            return Err("Usage of reserved TSL keyword '" + words[1] + "' as variable name", 102, lcount, fname);
                         }
                         if (long.TryParse(words[2], out long var)) { 
                             names.Add(words[1]);
@@ -74,6 +110,49 @@ namespace tsl
                         }
                         
                         break;
+                    case "string":
+                        if (words.Length < 2) return Err("Expected variable identifier.", 30, lcount, fname);
+                        if(names.Contains(words[1]))
+                        {
+                            TypeMap.TryGetValue(words[1], out string vartype);
+                            return Err("Redefinition of variable " + words[1] + " of type " + vartype, 51, lcount, fname);
+                        }
+                        if (CheckArr(keywords, words[1]) != -1)
+                        {
+                            return Err("Usage of reserved TSL keyword '" + words[1] + "' as variable name", 102, lcount, fname);
+                        }
+                        string outString = "";
+                        try
+                        {
+                            int strLen = words.Length;
+                            for(int i = 2; i < strLen; i++)
+                            {
+                                outString += words[i];
+                                if (i != strLen - 1) outString += " ";
+                            }
+                            string testString = words[2];
+                        }
+                        catch (Exception es)
+                        {
+                            return Err("Invalid string assignment", 53, lcount, fname);
+                        }
+                        
+                        names.Add(words[1]);
+                        StringVar.Add(words[1], outString);
+                        TypeMap.Add(words[1], "string");
+                        break;
+
+                    case "float":
+                        if (names.Contains(words[1]))
+                        {
+                            TypeMap.TryGetValue(words[1], out string vartype);
+                            return Err("Redefinition of variable " + words[1] + " of type " + vartype, 51, lcount, fname);
+                        }
+                        if (CheckArr(keywords, words[1]) != -1)
+                        {
+                            return Err("Usage of reserved TSL keyword '" + words[1] + "' as variable name", 102, lcount, fname);
+                        }
+                        break;
                     case "vput":
                         if (names.Contains(words[1]))
                         {
@@ -82,6 +161,11 @@ namespace tsl
                             {
                                 IntVar.TryGetValue(words[1], out long varval);
                                 Put(varval.ToString());
+                            }
+                            if (vartype == "string")
+                            {
+                                StringVar.TryGetValue(words[1], out string varval);
+                                Put(varval);
                             }
                         }
                         else
@@ -97,6 +181,11 @@ namespace tsl
                             {
                                 IntVar.TryGetValue(words[1], out long varval);
                                 Put('\n' + varval.ToString());
+                            }
+                            if (vartype == "string")
+                            {
+                                StringVar.TryGetValue(words[1], out string varval);
+                                Put('\n' + varval);
                             }
                         }
                         else
@@ -162,6 +251,77 @@ namespace tsl
                         break;
                     case "putnl":
                         Put("\n");
+                        break;
+                    case "fwrites":
+                        int lstren = words.Length;
+                        try
+                        {
+                            string outstr = "";
+                            for (int iles = 2; iles < lstren; iles++)
+                            {
+                                outstr += words[iles];
+                                if (iles != lstren - 1)
+                                {
+                                    outstr += " ";
+                                }
+                            }
+                            System.IO.File.WriteAllText(words[1], outstr);
+                        }
+                        catch (Exception FErr)
+                        {
+                            Err("Error writing to file " + words[1] + ".", 69, lcount, fname);
+                        }
+                        break;
+                    case "fputs":
+                        int lstrenb = words.Length;
+                        try
+                        {
+                            string outstrb = "";
+                            for (int iles = 2; iles < lstrenb; iles++)
+                            {
+                                outstrb += words[iles];
+                                if (iles != lstrenb - 1)
+                                {
+                                    outstrb += " ";
+                                }
+                            }
+                            System.IO.File.AppendAllText(words[1], outstrb);
+                        }
+                        catch (Exception FErr)
+                        {
+                            Err("Error writing to file " + words[1] + ".", 69, lcount, fname);
+                        }
+                        break;
+                    case "fgets":
+                        int lstrenc = words.Length;
+                        string outstrc = "";
+                        try
+                        {
+                            outstrc = System.IO.File.ReadAllText(words[1]);
+                        }
+                        catch (Exception FErr)
+                        {
+                            Err("Error reading from file " + words[1] + ".", 68, lcount, fname);
+                        }
+                        Put(outstrc + "\n");
+                        break;
+                    case "fgetsl":
+                        int lstrend = words.Length;
+                        string[] outstrd = {""};
+                        try
+                        {
+                            outstrd = System.IO.File.ReadAllLines(words[1]);
+                        }
+                        catch (Exception FErr)
+                        {
+                            return Err("Error reading from file " + words[1] + ".", 68, lcount, fname);
+                        }
+                        foreach (string outline in outstrd)
+                        {
+                            Put(outline);
+                            if (outline[outline.Length - 1] == '\n') Put("\n");
+                            else Put(" ");                            
+                        }
                         break;
                     default:
                         break;
