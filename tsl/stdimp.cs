@@ -23,7 +23,7 @@ namespace tsl
         {
             ConsoleColor def = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine("\nTSLC \"{2}\" line {3} {0} Error Code: {1}. ", arg, errcode, fname, ln);
+            Console.Error.WriteLine("\nTSLI: \"{2}\": line {3}: {0} Error Code: 0x{1}. ", arg, errcode.ToString("X"), fname, ln);
             Console.ForegroundColor = def;
             return errcode;
         }

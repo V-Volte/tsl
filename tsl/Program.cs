@@ -88,6 +88,22 @@ namespace tsl
                 //try { string varname = words[1]; string varval = words[2]; }
                 //catch (Exception E) { return Err("Invalid declaration. ", 50); }
                 switch (words[0]) {
+                    case "titleset":
+                        if (words.Length < 2) Err("Expected title string.", 125, lcount, fname);
+                        else
+                        {
+                            try
+                            {
+                                Console.Title = words[1];
+                            }
+                            catch
+                            {
+                                Err("Invalid console title.", 126, lcount, fname);
+                            }
+                        }
+                        break;
+                    case "vtitleset":
+                        break;
                     case "int":
                         if (words.Length < 2) return Err("Expected variable identifier.", 30, lcount, fname);
                         if (names.Contains(words[1]))
@@ -103,6 +119,16 @@ namespace tsl
                             names.Add(words[1]);
                             IntVar.Add(words[1], var);
                             TypeMap.Add(words[1], "int");
+                        }
+                        else if (names.Contains(words[2]))
+                        {
+                            if(TypeMap.TryGetValue(words[2], out string vType) && vType == "int")
+                            {
+                                names.Add(words[1]);
+                                IntVar.TryGetValue(words[2], out long varVal);
+                                IntVar.Add(words[1], varVal);
+                                TypeMap.Add(words[1], "int");
+                            }
                         }
                         else
                         {
@@ -143,6 +169,7 @@ namespace tsl
                         break;
 
                     case "float":
+                        if (words.Length < 2) return Err("Expected variable identifier.", 30, lcount, fname);
                         if (names.Contains(words[1]))
                         {
                             TypeMap.TryGetValue(words[1], out string vartype);
@@ -152,6 +179,36 @@ namespace tsl
                         {
                             return Err("Usage of reserved TSL keyword '" + words[1] + "' as variable name", 102, lcount, fname);
                         }
+                        if (double.TryParse(words[2], out double vVal))
+                        {
+                            names.Add(words[1]);
+                            FloatVar.Add(words[1], vVal);
+                            TypeMap.Add(words[1], "float");
+                        }
+                        else if (names.Contains(words[2]))
+                        {
+                            string vType;
+                            if (TypeMap.TryGetValue(words[2], out vType) && vType == "int")
+                            {
+                                names.Add(words[1]);
+                                IntVar.TryGetValue(words[2], out long varVal);
+                                double vDouble = varVal;
+                                FloatVar.Add(words[1], vDouble);
+                                TypeMap.Add(words[1], "float");
+                            }
+                            else if (TypeMap.TryGetValue(words[2], out vType) && vType == "float")
+                            {
+                                names.Add(words[1]);
+                                FloatVar.TryGetValue(words[2], out double varVal);
+                                FloatVar.Add(words[1], varVal);
+                                TypeMap.Add(words[1], "float");
+                            }
+                        }
+                        else
+                        {
+                            return Err("Invalid value for variable type float.", 37, lcount, fname);
+                        }
+
                         break;
                     case "vput":
                         if (names.Contains(words[1]))
@@ -166,6 +223,11 @@ namespace tsl
                             {
                                 StringVar.TryGetValue(words[1], out string varval);
                                 Put(varval);
+                            }
+                            if (vartype == "float")
+                            {
+                                FloatVar.TryGetValue(words[1], out double varval);
+                                Put(varval.ToString());
                             }
                         }
                         else
@@ -186,6 +248,11 @@ namespace tsl
                             {
                                 StringVar.TryGetValue(words[1], out string varval);
                                 Put('\n' + varval);
+                            }
+                            if (vartype == "float")
+                            {
+                                FloatVar.TryGetValue(words[1], out double varval);
+                                Put('\n' + varval.ToString());
                             }
                         }
                         else
@@ -225,7 +292,20 @@ namespace tsl
                                     }
                                     else
                                     {
-                                        Err("Invalid input for variable " + words[0] + "of type " + vtype, 71, lcount, fname);
+                                        Err("Invalid input for variable '" + words[1] + "' of type '" + vtype + "'.", 71, lcount, fname);
+                                    }
+                                    break;
+                                case "string":
+                                    StringVar[words[1]] = Console.ReadLine();
+                                    break;
+                                case "float":
+                                    if (double.TryParse(Console.ReadLine(), out double vDouble))
+                                    {
+                                        FloatVar[words[1]] = vDouble;
+                                    }
+                                    else
+                                    {
+                                        Err("Invalid input for variable '" + words[1] + "' of type '" + vtype + "'.", 71, lcount, fname);
                                     }
                                     break;
                                 default:
@@ -247,7 +327,7 @@ namespace tsl
                         Put("\n");
                         int le = words.Length;
                         for (int i = 1; i < le - 1; ++i) { Put(words[i] + " "); }
-                        Put(words[le - 1] + '\n');
+                        Put(words[le - 1]);
                         break;
                     case "putnl":
                         Put("\n");
