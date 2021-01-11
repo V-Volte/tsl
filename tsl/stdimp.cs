@@ -6,9 +6,12 @@ namespace tsl
 {
     public static class StdImp
     {
-        public static void Put(string arg)
+        public static int vputlcount = 0;
+        public static int Put(string arg)
         {
             Console.Write(arg);
+            vputlcount++;
+            return arg.Length;
         }
         public static int Err(string arg, int errcode)
         {
